@@ -573,6 +573,6 @@ def search_financiers(query="", page_length=20):
 	filters = {}
 	if query:
 		filters["name"] = ["like", f"%{query}%"]
-	return frappe.get_all(
+	return frappe.get_list(
 		"Tracking Financier", filters=filters, fields=["name"], order_by="name asc", page_length=cint(page_length)
 	)

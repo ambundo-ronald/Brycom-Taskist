@@ -10,6 +10,7 @@ declare module 'vue' {
   export interface GlobalComponents {
     AppShell: typeof import('./src/components/layout/AppShell.vue')['default']
     DatetimePicker: typeof import('./src/components/common/DatetimePicker.vue')['default']
+    InstallationPanel: typeof import('./src/components/task/InstallationPanel.vue')['default']
     KanbanBoard: typeof import('./src/components/kanban/KanbanBoard.vue')['default']
     KanbanColumn: typeof import('./src/components/kanban/KanbanColumn.vue')['default']
     LinkField: typeof import('./src/components/common/LinkField.vue')['default']
