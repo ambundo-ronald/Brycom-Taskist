@@ -19,6 +19,7 @@
 				</div>
 				<div class="flex items-center gap-2">
 					<Button
+						v-if="!isInstallation"
 						@click="markCompleted"
 						size="sm"
 						:variant="isCompleted ? 'subtle' : 'ghost'"
@@ -46,6 +47,9 @@
 
 				<!-- Subject -->
 				<TextInput v-model="doc.subject" @blur="save" class="w-full text-sm font-medium" />
+
+				<!-- Brycom installation job (receipt, vehicle details, mark installed) -->
+				<InstallationPanel v-if="isInstallation" :task-name="doc.name" @changed="onInstallationChanged" />
 
 				<!-- Status + Priority row -->
 				<div class="grid grid-cols-2 gap-2">
@@ -290,6 +294,7 @@ import RecurrenceEditor from '@/components/common/RecurrenceEditor.vue'
 import LinkField from '@/components/common/LinkField.vue'
 import TaskAttachments from '@/components/task/TaskAttachments.vue'
 import DatetimePicker from '@/components/common/DatetimePicker.vue'
+import InstallationPanel from '@/components/task/InstallationPanel.vue'
 import dayjs from 'dayjs'
 
 const taskStore = useTaskStore()
@@ -307,6 +312,16 @@ const subtaskSubject = ref('')
 const subtaskInput = ref<HTMLInputElement | null>(null)
 
 const isCompleted = computed(() => doc.value && doc.value.status === 'Completed')
+const isInstallation = computed(() => !!doc.value?.custom_installation_job)
+
+async function onInstallationChanged() {
+	if (!doc.value?.name) return
+	try {
+		const fresh = await getDoc('Task', doc.value.name)
+		if (fresh) doc.value = fresh
+	} catch { /* keep current state */ }
+	taskStore.fetchTasks()
+}
 
 watch(() => taskStore.selectedTask, async (task) => {
 	if (!task) { doc.value = null; return }

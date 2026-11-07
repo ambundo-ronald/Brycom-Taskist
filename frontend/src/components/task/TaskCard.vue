@@ -19,6 +19,7 @@
 					</button>
 					<FeatherIcon v-if="task.is_group" name="folder" class="w-3.5 h-3.5 text-blue-500 flex-shrink-0" title="Group task" />
 					<FeatherIcon v-if="task.is_milestone" name="star" class="w-3.5 h-3.5 text-amber-500 flex-shrink-0" title="Milestone" />
+					<FeatherIcon v-if="task.custom_installation_job" name="truck" class="w-3.5 h-3.5 text-blue-600 flex-shrink-0" title="Installation job" />
 					<p class="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">{{ task.subject }}</p>
 					<FeatherIcon v-if="task.taskist_is_recurring" name="refresh-cw" class="w-3.5 h-3.5 text-blue-500 flex-shrink-0" title="Recurring task" />
 				</div>

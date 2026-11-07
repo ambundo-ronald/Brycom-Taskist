@@ -133,10 +133,31 @@ app_license = "mit"
 
 doc_events = {
 	"Task": {
+		"before_save": "taskist.brycom.task_before_save",
 		"after_insert": "taskist.api.notify_task_change",
 		"on_update": "taskist.api.notify_task_change",
-	}
+	},
+	# Brycom installation workflow (no-ops on sites without these doctypes)
+	"Installation Job": {
+		"before_save": "taskist.brycom.installation_job_validate",
+		"on_update": "taskist.brycom.installation_job_on_update",
+	},
+	"Sales Invoice": {
+		"on_submit": "taskist.brycom.sales_invoice_on_submit",
+	},
 }
+
+permission_query_conditions = {
+	"Task": "taskist.brycom.task_query",
+	"Installation Job": "taskist.brycom.installation_job_query",
+}
+
+has_permission = {
+	"Task": "taskist.brycom.task_has_permission",
+	"Installation Job": "taskist.brycom.installation_job_has_permission",
+}
+
+on_session_creation = "taskist.brycom.redirect_technician"
 
 # Scheduled Tasks
 # ---------------

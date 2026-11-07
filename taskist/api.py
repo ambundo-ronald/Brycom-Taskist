@@ -69,6 +69,9 @@ def get_tasks(
 		"taskist_is_recurring", "taskist_recurrence_rule",
 		"_assign", "_user_tags", "modified", "creation",
 	]
+	# Brycom installation link (only on sites that have the custom field)
+	if frappe.get_meta("Task").has_field("custom_installation_job"):
+		fields.append("custom_installation_job")
 
 	pl = cint(page_length)
 	tasks = frappe.get_list(
