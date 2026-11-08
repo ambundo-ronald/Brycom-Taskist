@@ -11,15 +11,16 @@ app_license = "mit"
 # required_apps = []
 
 # Each item in the list will be shown as an app in the apps page
-# add_to_apps_screen = [
-# 	{
-# 		"name": "taskist",
-# 		"logo": "/assets/taskist/logo.png",
-# 		"title": "Taskist",
-# 		"route": "/taskist",
-# 		"has_permission": "taskist.api.permission.has_app_permission"
-# 	}
-# ]
+# Registers Taskist as an app with a route, so users whose Default App is
+# "taskist" (e.g. Brycom technicians) land on /taskist after login.
+add_to_apps_screen = [
+	{
+		"name": "taskist",
+		"logo": "/assets/taskist/logo.png",
+		"title": "Taskist",
+		"route": "/taskist",
+	}
+]
 
 # Includes in <head>
 # ------------------
