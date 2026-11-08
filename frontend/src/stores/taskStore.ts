@@ -32,8 +32,6 @@ export interface Task {
 	taskist_sort_order: number
 	taskist_is_recurring: boolean
 	taskist_recurrence_rule: string | null
-	// Brycom installation job link (only on sites that have it)
-	custom_installation_job?: string | null
 	// Virtual / internal fields
 	_assign: string
 	_user_tags: string
@@ -56,6 +54,18 @@ export const useTaskStore = defineStore('tasks', () => {
 	const collapsedGroups = ref<Set<string>>(new Set())
 	const nameSort = ref<'none' | 'asc' | 'desc'>('none')
 	const groupFilter = ref<string | null>(null)
+	/** True for users who only have the Technician role (field installers) */
+	const isTechnician = ref(false)
+	let userContextLoaded: Promise<void> | null = null
+
+	function loadUserContext() {
+		if (!userContextLoaded) {
+			userContextLoaded = call('taskist.brycom.get_user_context')
+				.then((ctx: any) => { isTechnician.value = !!ctx?.is_technician })
+				.catch(() => { isTechnician.value = false })
+		}
+		return userContextLoaded
+	}
 
 	function toggleNameSort() {
 		if (nameSort.value === 'none') nameSort.value = 'asc'
@@ -237,5 +247,6 @@ export const useTaskStore = defineStore('tasks', () => {
 		fetchTasks, quickCreate, updateTaskStatus, selectTask, closeDetail,
 		toggleCollapse, isCollapsed, collapseAllGroups, expandAllGroups, toggleNameSort,
 		toggleGroupFilter, moveGroupWithChildren,
+		isTechnician, loadUserContext,
 	}
 })

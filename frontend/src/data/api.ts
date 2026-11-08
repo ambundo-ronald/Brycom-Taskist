@@ -25,8 +25,20 @@ function extractFrappeError(responseData: any, fallback: string): string {
 	return fallback
 }
 
+function isLoggedOut(): boolean {
+	const m = document.cookie.match(/(?:^|;\s*)user_id=([^;]*)/)
+	const user = m ? decodeURIComponent(m[1]) : ''
+	return !user || user === 'Guest'
+}
+
+/**
+ * Redirect to login only when the session has really ended.
+ * A 403 for a logged-in user just means "no permission for this record"
+ * (e.g. a technician reading Projects) and must not trigger a redirect,
+ * otherwise login bounces straight back and the page reloads forever.
+ */
 function handleAuthError(res: Response): boolean {
-	if (res.status === 403 || res.status === 401) {
+	if (res.status === 401 || (res.status === 403 && isLoggedOut())) {
 		window.location.href = '/login?redirect-to=' + encodeURIComponent(window.location.pathname)
 		return true
 	}

@@ -38,28 +38,58 @@
 				</div>
 			</div>
 
-			<!-- Step 1: accept receipt -->
+			<!-- Step 1: confirm each IMEI, then accept receipt -->
 			<div v-if="job.state === 'Assigned'" class="space-y-2">
-				<div class="text-[11px] font-medium text-gray-500 dark:text-gray-400">Devices to collect ({{ job.devices.length }})</div>
-				<div v-for="d in job.devices" :key="d.name" class="flex items-center justify-between text-xs bg-gray-50 dark:bg-gray-700/50 rounded px-2 py-1.5">
-					<div>
-						<div class="font-medium text-gray-800 dark:text-gray-200">{{ d.item_code }}</div>
-						<div class="font-mono text-[11px] text-gray-500 dark:text-gray-400">{{ d.serial_no }}</div>
-					</div>
-					<Badge :label="supplyLabel(d.supply_type)" size="sm" :theme="d.supply_type === 'Sold' ? 'green' : 'blue'" />
+				<div class="flex items-center justify-between">
+					<div class="text-[11px] font-medium text-gray-500 dark:text-gray-400">Devices handed to you</div>
+					<div class="text-[11px] font-medium" :class="allConfirmed ? 'text-green-600 dark:text-green-400' : 'text-gray-400'">{{ confirmedCount }} / {{ job.devices.length }} confirmed</div>
 				</div>
+
+				<div v-if="job.is_my_job" class="flex gap-1.5">
+					<input
+						v-model="imeiInput"
+						@keydown.enter.prevent="confirmByImei"
+						inputmode="numeric"
+						class="field-input font-mono"
+						placeholder="Scan or type an IMEI to confirm it"
+					/>
+					<Button size="sm" variant="subtle" label="Check" :disabled="!imeiInput.trim()" @click="confirmByImei" />
+				</div>
+				<div v-if="imeiMessage" class="text-[11px]" :class="imeiMessageOk ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'">{{ imeiMessage }}</div>
+
+				<button
+					v-for="d in job.devices"
+					:key="d.name"
+					type="button"
+					:disabled="!job.is_my_job"
+					@click="toggleConfirm(d.serial_no)"
+					class="w-full flex items-center gap-2 text-left text-xs rounded-lg px-2 py-2 border transition-colors"
+					:class="confirmed.has(d.serial_no)
+						? 'border-green-300 bg-green-50 dark:border-green-700 dark:bg-green-900/20'
+						: 'border-gray-200 bg-gray-50 dark:border-gray-600 dark:bg-gray-700/50 hover:border-blue-300'"
+				>
+					<span
+						class="w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0 border"
+						:class="confirmed.has(d.serial_no) ? 'bg-green-500 border-green-500 text-white' : 'border-gray-300 dark:border-gray-500'"
+					>
+						<FeatherIcon v-if="confirmed.has(d.serial_no)" name="check" class="w-3 h-3" />
+					</span>
+					<span class="flex-1 min-w-0">
+						<span class="block font-mono text-sm font-semibold text-gray-800 dark:text-gray-100 tracking-wide">{{ d.serial_no }}</span>
+						<span class="block text-[11px] text-gray-500 dark:text-gray-400">{{ d.item_code }}</span>
+					</span>
+					<Badge :label="supplyLabel(d.supply_type)" size="sm" :theme="d.supply_type === 'Sold' ? 'green' : 'blue'" />
+				</button>
+
 				<template v-if="job.is_my_job">
-					<label class="flex items-start gap-2 text-xs text-gray-700 dark:text-gray-300 pt-1">
-						<input v-model="confirmReceipt" type="checkbox" class="mt-0.5" />
-						<span>I have physically received all {{ job.devices.length }} device(s) listed above and checked the IMEI numbers.</span>
-					</label>
+					<div class="text-[11px] text-gray-400">Tap each device (or scan its IMEI) once you've checked it matches the device in your hand. If anything is missing or different, don't accept: add a comment below for the office.</div>
 					<Button
 						class="w-full"
 						variant="solid"
 						theme="blue"
 						:loading="busy"
-						:disabled="!confirmReceipt"
-						label="Accept Receipt"
+						:disabled="!allConfirmed"
+						:label="allConfirmed ? 'Accept Receipt' : `Confirm all ${job.devices.length} devices to accept`"
 						@click="accept"
 					/>
 				</template>
@@ -163,12 +193,40 @@ const notes = ref('')
 const loading = ref(false)
 const busy = ref(false)
 const error = ref('')
-const confirmReceipt = ref(false)
+const confirmed = ref<Set<string>>(new Set())
+const imeiInput = ref('')
+const imeiMessage = ref('')
+const imeiMessageOk = ref(false)
 
 const stateTheme = computed(() => {
 	const map: Record<string, string> = { Assigned: 'orange', Accepted: 'blue', Installed: 'green', Completed: 'green', Returned: 'gray', Draft: 'gray', Cancelled: 'red' }
 	return map[job.value?.state] || 'gray'
 })
+
+const confirmedCount = computed(() => (job.value?.devices || []).filter((d: any) => confirmed.value.has(d.serial_no)).length)
+const allConfirmed = computed(() => !!job.value?.devices?.length && confirmedCount.value === job.value.devices.length)
+
+function toggleConfirm(serial: string) {
+	const next = new Set(confirmed.value)
+	if (next.has(serial)) next.delete(serial)
+	else next.add(serial)
+	confirmed.value = next
+}
+
+function confirmByImei() {
+	const value = imeiInput.value.replace(/\s+/g, '')
+	if (!value) return
+	const match = (job.value?.devices || []).find((d: any) => d.serial_no === value)
+	if (match) {
+		confirmed.value = new Set(confirmed.value).add(match.serial_no)
+		imeiMessage.value = `${match.serial_no} (${match.item_code}) confirmed`
+		imeiMessageOk.value = true
+	} else {
+		imeiMessage.value = `${value} is not on this job. Check the device before accepting.`
+		imeiMessageOk.value = false
+	}
+	imeiInput.value = ''
+}
 
 const allRegsEntered = computed(() => form.value.length > 0 && form.value.every(d => (d.vehicle_reg || '').trim()))
 
@@ -176,7 +234,8 @@ function setJob(data: any) {
 	job.value = data
 	form.value = (data?.devices || []).map((d: any) => ({ ...d }))
 	notes.value = data?.technician_notes || ''
-	confirmReceipt.value = false
+	confirmed.value = new Set()
+	imeiMessage.value = ''
 }
 
 async function load() {
@@ -214,7 +273,8 @@ async function run(method: string, args: Record<string, any>) {
 }
 
 function accept() {
-	return run('taskist.brycom.accept_installation_receipt', {})
+	if (!allConfirmed.value) return
+	return run('taskist.brycom.accept_installation_receipt', { confirmed_serials: Array.from(confirmed.value) })
 }
 
 function saveDetails() {

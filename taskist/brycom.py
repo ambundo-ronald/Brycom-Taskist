@@ -471,12 +471,6 @@ def task_has_permission(doc, ptype=None, user=None):
 	return None
 
 
-def redirect_technician(login_manager=None):
-	"""Send technician-only users straight to Taskist after login."""
-	if is_technician_only():
-		frappe.local.response["home_page"] = "/taskist"
-
-
 # ---------------------------------------------------------------------------
 # Taskist API (used by the Installation panel in the task detail view)
 # ---------------------------------------------------------------------------
@@ -516,13 +510,45 @@ def get_installation(task_name):
 
 
 @frappe.whitelist()
-def accept_installation_receipt(task_name):
+def accept_installation_receipt(task_name, confirmed_serials=None):
 	job = _job_for_task(task_name)
 	_check_technician(job)
 	if job.workflow_state != "Assigned":
 		frappe.throw(_("Installation Job {0} is {1}, so receipt cannot be accepted now.").format(job.name, job.workflow_state))
-	_set_state(job, "Accepted")
+
+	if isinstance(confirmed_serials, str):
+		confirmed_serials = json.loads(confirmed_serials or "[]")
+	expected = {d.serial_no for d in job.devices}
+	confirmed = {str(s).strip() for s in (confirmed_serials or [])}
+	missing = sorted(expected - confirmed)
+	if missing:
+		frappe.throw(_("Confirm every device before accepting. Not confirmed: {0}").format(", ".join(missing)))
+
+	frappe.flags.in_installation_sync = True
+	try:
+		_set_state(job, "Accepted")
+	finally:
+		frappe.flags.in_installation_sync = False
+	job.add_comment(
+		"Info",
+		_("{0} confirmed receipt of IMEIs: {1}").format(
+			frappe.utils.get_fullname(frappe.session.user), ", ".join(sorted(expected))
+		),
+	)
 	return get_installation(task_name)
+
+
+@frappe.whitelist()
+def get_user_context():
+	"""Lets the Taskist UI adapt for field technicians."""
+	return {"is_technician": bool(is_technician_only())}
+
+
+def user_before_save(doc, method=None):
+	"""Technician-only users open Taskist (not the desk) after login."""
+	roles = {r.role for r in doc.get("roles") or []}
+	if "Technician" in roles and not (roles & STAFF_ROLES) and doc.user_type == "System User":
+		doc.default_app = "taskist"
 
 
 def _apply_device_details(job, devices, notes=None):

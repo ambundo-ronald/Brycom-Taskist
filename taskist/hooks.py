@@ -145,6 +145,9 @@ doc_events = {
 	"Sales Invoice": {
 		"on_submit": "taskist.brycom.sales_invoice_on_submit",
 	},
+	"User": {
+		"before_save": "taskist.brycom.user_before_save",
+	},
 }
 
 permission_query_conditions = {
@@ -157,7 +160,6 @@ has_permission = {
 	"Installation Job": "taskist.brycom.installation_job_has_permission",
 }
 
-on_session_creation = "taskist.brycom.redirect_technician"
 
 # Scheduled Tasks
 # ---------------

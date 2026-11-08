@@ -11,6 +11,13 @@
 		</div>
 
 		<div v-if="!collapsed" class="p-4 flex-1 overflow-auto">
+			<div v-if="taskStore.isTechnician" class="text-sm text-gray-600 dark:text-gray-300">
+				<h3 class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-3">My Jobs</h3>
+				<button class="w-full text-left px-3 py-2 rounded-lg text-sm mb-1 bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 font-medium">
+					All my installation tasks
+				</button>
+			</div>
+			<template v-else>
 			<div class="flex items-center justify-between mb-3">
 				<h3 class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Projects</h3>
 				<button
@@ -45,6 +52,7 @@
 			>
 				{{ project }}
 			</button>
+			</template>
 		</div>
 
 	</aside>
@@ -93,5 +101,8 @@ function selectProject(project: string) {
 	taskStore.fetchTasks()
 }
 
-onMounted(loadProjects)
+onMounted(async () => {
+	await taskStore.loadUserContext()
+	if (!taskStore.isTechnician) loadProjects()
+})
 </script>

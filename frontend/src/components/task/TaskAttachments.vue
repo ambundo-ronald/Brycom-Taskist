@@ -1,10 +1,10 @@
 <template>
 	<div>
 		<div class="flex items-center justify-between mb-2">
-			<h3 class="text-xs font-medium text-gray-500 dark:text-gray-400">Attachments</h3>
+			<h3 class="text-xs font-medium text-gray-500 dark:text-gray-400">{{ title || 'Attachments' }}</h3>
 			<label class="cursor-pointer p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-400 hover:text-blue-600 dark:hover:text-blue-400">
 				<FeatherIcon name="plus" class="w-4 h-4" />
-				<input type="file" class="hidden" @change="uploadFile" multiple :disabled="uploading" />
+				<input type="file" class="hidden" @change="uploadFile" multiple :disabled="uploading" :accept="title === 'Installation photos' ? 'image/*' : undefined" />
 			</label>
 		</div>
 
@@ -47,7 +47,7 @@
 import { ref, watch } from 'vue'
 import { call, getCSRFToken } from '@/data/api'
 
-const props = defineProps<{ taskName: string }>()
+const props = defineProps<{ taskName: string; title?: string }>()
 
 interface Attachment {
 	name: string

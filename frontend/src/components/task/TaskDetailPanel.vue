@@ -51,6 +51,8 @@
 				<!-- Brycom installation job (receipt, vehicle details, mark installed) -->
 				<InstallationPanel v-if="isInstallation" :task-name="doc.name" @changed="onInstallationChanged" />
 
+				<!-- Regular task fields (hidden for installation tasks: the panel above covers them) -->
+				<template v-if="!isInstallation">
 				<!-- Status + Priority row -->
 				<div class="grid grid-cols-2 gap-2">
 					<div>
@@ -208,9 +210,12 @@
 					</div>
 				</div>
 
-				<!-- Attachments -->
-				<TaskAttachments v-if="doc.name" :task-name="doc.name" />
+				</template>
 
+				<!-- Attachments -->
+				<TaskAttachments v-if="doc.name" :task-name="doc.name" :title="isInstallation ? 'Installation photos' : 'Attachments'" />
+
+				<template v-if="!isInstallation">
 				<!-- Parent Task -->
 				<div v-if="doc.parent_task" class="flex items-center gap-1.5 px-2 py-1.5 bg-purple-50 dark:bg-purple-900/20 rounded-lg">
 					<FeatherIcon name="corner-up-left" class="w-3.5 h-3.5 text-purple-500 flex-shrink-0" />
@@ -258,6 +263,8 @@
 					</div>
 					<div v-else-if="!showSubtaskAdd" class="text-[11px] text-gray-400 dark:text-gray-500">No subtasks</div>
 				</div>
+
+				</template>
 
 				<!-- Comments -->
 				<div>
